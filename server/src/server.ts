@@ -1,18 +1,17 @@
 import { createServer } from "node:http";
-import { connect, connection } from "mongoose";
+
 import { app } from "./app";
 import { preparePlanets } from "./models/planets.model";
+import { mongoConnect as mongoConnect } from "./services/mongo";
 
 const PORT = process.env.PORT || 8000;
-const MONGO_URL =
-  "mongodb+srv://nasa-api:Z5VRt7czFfVb0v16@nasacluster.gqw3fih.mongodb.net/nasa?retryWrites=true&w=majority";
-
-connection.once("open", () => console.log("MongoDB connection ready! "));
-connection.on("error", (err) => console.error(err));
 
 async function startServer() {
-  await connect(MONGO_URL);
-  await preparePlanets();
+  mongoConnect().catch(console.error);
+
+  preparePlanets()
+    .then(() => console.log("Planet data ready!"))
+    .catch(console.error);
 
   const server = createServer(app);
   server.listen(PORT, () => {

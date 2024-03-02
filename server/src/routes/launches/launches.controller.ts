@@ -1,17 +1,17 @@
 import { Request, Response } from "express";
 import {
   getAllLaunches,
-  addNewLaunch,
+  scheduleNewLaunch,
   getLaunchById,
   abordLaunch,
 } from "../../models";
 import { Launch } from "../../models/dtos/launch.type";
 
-function httpGetAllLaunches(req: Request, res: Response) {
-  return res.status(200).json(getAllLaunches());
+export async function httpGetAllLaunches(req: Request, res: Response) {
+  return res.status(200).json(await getAllLaunches());
 }
 
-function httpAddNewLaunch(req: Request, res: Response) {
+export async function httpAddNewLaunch(req: Request, res: Response) {
   const launch: Launch = req.body;
 
   if (
@@ -28,20 +28,21 @@ function httpAddNewLaunch(req: Request, res: Response) {
     return res.status(400).json({ error: "Invalid launch date" });
   }
 
-  addNewLaunch(launch);
+  await scheduleNewLaunch(launch);
   return res.status(201).json(launch);
 }
 
-function httpDeleteLaunch(req: Request, res: Response) {
+export async function httpDeleteLaunch(req: Request, res: Response) {
   const launchId = Number(req.params.id);
-  const launch = getLaunchById(launchId);
+  let launch = await getLaunchById(launchId);
+
   if (!launch) {
     res.status(404).json({ error: `No launch found with Id ${launchId}` });
   }
 
-  abordLaunch(launchId);
-
-  res.status(200).json(launch);
+  const aborded = await abordLaunch(launchId);
+  if (!aborded) {
+    res.status(400).json({ error: "Launch not aborded" });
+  }
+  res.status(200).json({ ok: true });
 }
-
-export { httpGetAllLaunches, httpAddNewLaunch, httpDeleteLaunch };

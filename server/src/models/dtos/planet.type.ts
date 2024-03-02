@@ -1,4 +1,4 @@
-type Planet = {
+export type Planet = {
   kepid: unknown;
   kepoi_name: unknown;
   kepler_name: string;
@@ -49,5 +49,3 @@ type Planet = {
   dec: unknown;
   koi_kepmag: unknown;
 };
-
-export { Planet };

@@ -1,70 +1,82 @@
 import request from "supertest";
 import { app } from "../../app";
+import { mongoConnect, mongoDisconnect } from "../../services/mongo";
 
-describe("GET /launches", () => {
-  it("should respond with 200 success", async () => {
-    await request(app)
-      .get("/launches")
-      .expect("Content-Type", /json/)
-      .expect(200);
+describe("Launches API", () => {
+  beforeAll(async () => {
+    await mongoConnect();
+    console.log("Connected to MongoDB");
   });
-});
 
-describe("POST /launches", () => {
-  const launch = {
-    target: "Mars",
-    launchDate: "January 17, 2033",
-    mission: "Xuz",
-    rocket: "super rocket",
-  };
+  afterAll(async () => {
+    await mongoDisconnect();
+  });
 
-  const launchWithoutDate = {
-    target: "Mars",
-    mission: "Xuz",
-    rocket: "super rocket",
-  };
+  describe("GET /launches", () => {
+    it("should respond with 200 success", async () => {
+      await request(app)
+        .get("/launches")
+        .expect("Content-Type", /json/)
+        .expect(200);
+    });
+  });
 
-  const launchWithInvalidDate = {
-    ...launchWithoutDate,
-    launchDate: "not a date",
-  };
+  describe("POST /launches", () => {
+    const launch = {
+      target: "Kepler-1410 b",
+      launchDate: "January 17, 2033",
+      mission: "Xuz",
+      rocket: "super rocket",
+    };
 
-  it("should respond with 201 created", async () => {
-    const response = await request(app)
-      .post("/launches")
-      .send(launch)
-      .expect("Content-Type", /json/)
-      .expect(201);
+    const launchWithoutDate = {
+      target: "Kepler-1410 b",
+      mission: "Xuz",
+      rocket: "super rocket",
+    };
 
-    const requestDate = new Date(launch.launchDate).toISOString();
-
-    expect(response.body).toMatchObject({
+    const launchWithInvalidDate = {
       ...launchWithoutDate,
-      launchDate: requestDate,
+      launchDate: "not a date",
+    };
+
+    it("should respond with 201 created", async () => {
+      const response = await request(app)
+        .post("/launches")
+        .send(launch)
+        .expect("Content-Type", /json/)
+        .expect(201);
+
+      const requestDate = new Date(launch.launchDate).toISOString();
+
+      expect(response.body).toMatchObject({
+        ...launchWithoutDate,
+        launchDate: requestDate,
+      });
     });
-  });
 
-  it("should catch missing required properties", async () => {
-    const response = await request(app)
-      .post("/launches")
-      .send(launchWithoutDate)
-      .expect("Content-Type", /json/)
-      .expect(400);
+    it("should catch missing required properties", async () => {
+      const response = await request(app)
+        .post("/launches")
+        .send(launchWithoutDate)
+        .expect("Content-Type", /json/)
+        .expect(400);
 
-    expect(response.body).toStrictEqual({
-      error: "Missing property",
+      expect(response.body).toStrictEqual({
+        error: "Missing property",
+      });
     });
-  });
 
-  it("should catch invalid dates", async () => {
-    const response = await request(app)
-      .post("/launches")
-      .send(launchWithInvalidDate)
-      .expect("Content-Type", /json/)
-      .expect(400);
+    it("should catch invalid dates", async () => {
+      const response = await request(app)
+        .post("/launches")
+        .send(launchWithInvalidDate)
+        .expect("Content-Type", /json/)
+        .expect(400);
 
-    expect(response.body).toStrictEqual({
-      error: "Invalid launch date",
+      expect(response.body).toStrictEqual({
+        error: "Invalid launch date",
+      });
     });
   });
 });
