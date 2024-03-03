@@ -1,2 +1,2 @@
-export * from './planets.model';
-export * from './launches.model';
+export * from "./planets.model";
+export * from "./launches.model";

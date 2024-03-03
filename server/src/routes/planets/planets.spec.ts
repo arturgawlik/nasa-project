@@ -24,7 +24,7 @@ describe("Planets API", () => {
   describe("GET /plannets", () => {
     it("should respond with 200 success", async () => {
       await request(app)
-        .get("/planets")
+        .get("/v1/planets")
         .expect("Content-Type", /json/)
         .expect(200);
     });

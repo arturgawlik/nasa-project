@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8000";
+const API_URL = "http://localhost:8000/v1";
 
 function httpGetPlanets() {
   return fetch(`${API_URL}/planets`).then((res) => res.json());

@@ -1,4 +1,15 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, Document } from "mongoose";
+
+export type ILaunch = {
+  flightNumber: number;
+  mission: string;
+  rocket: string;
+  launchDate: Date;
+  target: string;
+  customer: string[];
+  upcoming: boolean;
+  succes: boolean;
+};
 
 const launchesSchema = new Schema({
   flightNumber: {
@@ -36,4 +47,4 @@ const launchesSchema = new Schema({
   },
 });
 
-export default model("Launch", launchesSchema);
+export default model<ILaunch & Document>("Launch", launchesSchema);

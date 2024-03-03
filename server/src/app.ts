@@ -4,6 +4,7 @@ import cors from "cors";
 import morgan from "morgan";
 import planetsRouter from "./routes/planets";
 import { launchesRouter } from "./routes/launches/launches.router";
+import { api } from "./routes/api";
 
 const app = express();
 
@@ -15,10 +16,9 @@ app.use(
 );
 app.use(express.json());
 
-app.use(express.static(join(__dirname, "..", "public")));
+app.use("/v1", api);
 
-app.use("/planets", planetsRouter);
-app.use("/launches", launchesRouter);
+app.use(express.static(join(__dirname, "..", "public")));
 
 app.get("/*", (req, res) => {
   res.sendFile(join(__dirname, "..", "public", "index.html"));
