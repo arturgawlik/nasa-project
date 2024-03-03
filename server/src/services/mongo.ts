@@ -6,8 +6,9 @@ const MONGO_URL =
 connection.once("open", () => console.log("MongoDB connection ready! "));
 connection.on("error", (err) => console.error(err));
 
-export function mongoConnect() {
-  return connect(MONGO_URL, {});
+export async function mongoConnect(uri?: string) {
+  const connection = await connect(uri ?? MONGO_URL, {});
+  return connection;
 }
 
 export function mongoDisconnect() {

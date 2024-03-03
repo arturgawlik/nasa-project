@@ -1,15 +1,26 @@
 import request from "supertest";
+import {
+  MongoDBContainer,
+  StartedMongoDBContainer,
+} from "@testcontainers/mongodb";
 import { app } from "../../app";
 import { mongoConnect, mongoDisconnect } from "../../services/mongo";
 
 describe("Launches API", () => {
+  let mongoContainer: StartedMongoDBContainer | undefined;
+
   beforeAll(async () => {
-    await mongoConnect();
-    console.log("Connected to MongoDB");
-  });
+    try {
+      mongoContainer = await new MongoDBContainer().start();
+      await mongoConnect(mongoContainer.getConnectionString());
+    } catch (error) {
+      console.error(error);
+    }
+  }, 30_000);
 
   afterAll(async () => {
     await mongoDisconnect();
+    await mongoContainer?.stop();
   });
 
   describe("GET /launches", () => {
