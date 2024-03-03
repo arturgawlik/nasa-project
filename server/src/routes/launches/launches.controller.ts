@@ -34,15 +34,21 @@ export async function httpAddNewLaunch(req: Request, res: Response) {
 
 export async function httpDeleteLaunch(req: Request, res: Response) {
   const launchId = Number(req.params.id);
-  let launch = await getLaunchById(launchId);
+  if (Number.isNaN(launchId)) {
+    return res.status(400).json({ error: "Invalid launch id" });
+  }
+
+  const launch = await getLaunchById(launchId);
 
   if (!launch) {
-    res.status(404).json({ error: `No launch found with Id ${launchId}` });
+    return res
+      .status(404)
+      .json({ error: `No launch found with Id ${launchId}` });
   }
 
   const aborded = await abordLaunch(launchId);
   if (!aborded) {
-    res.status(400).json({ error: "Launch not aborded" });
+    return res.status(400).json({ error: "Launch not aborded" });
   }
-  res.status(200).json({ ok: true });
+  return res.status(200).json({ ok: true });
 }

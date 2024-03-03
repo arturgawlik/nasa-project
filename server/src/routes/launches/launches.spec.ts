@@ -10,13 +10,11 @@ describe("Launches API", () => {
   let mongoContainer: StartedMongoDBContainer | undefined;
 
   beforeAll(async () => {
-    try {
-      mongoContainer = await new MongoDBContainer().start();
-      await mongoConnect(mongoContainer.getConnectionString());
-    } catch (error) {
-      console.error(error);
-    }
-  }, 30_000);
+    mongoContainer = await new MongoDBContainer().start();
+    await mongoConnect(
+      mongoContainer.getConnectionString() + "/nasa?directConnection=true"
+    );
+  });
 
   afterAll(async () => {
     await mongoDisconnect();
@@ -88,6 +86,22 @@ describe("Launches API", () => {
       expect(response.body).toStrictEqual({
         error: "Invalid launch date",
       });
+    });
+  });
+
+  describe("DELETE /lanuches/:id", () => {
+    it("should respond with 400 if id is not a number", async () => {
+      await request(app).delete("/launches/not_an_number").expect(400);
+    });
+
+    it("should respond with 404 if launch does not exists", async () => {
+      await request(app)
+        .delete(`/launches/${Number.MAX_SAFE_INTEGER}`)
+        .expect(404);
+    });
+
+    it("should respond with 200 if lanuch is deleted", async () => {
+      await request(app).delete("/launches/1").expect(200);
     });
   });
 });
