@@ -22,9 +22,74 @@ export async function abordLaunch(id: number) {
   return aborded.modifiedCount === 1;
 }
 
+export async function loadLaunchData() {
+  const firstSpacexLaunch = await launches.findOne({
+    flightNumber: 1,
+    rocket: "Falcon 1",
+    mission: "FalconSat",
+  });
+  if (firstSpacexLaunch) {
+    return;
+  }
+
+  const spacexLaunches = await getSpacexLaunches();
+}
+
+function getSpacexLaunches() {
+  return (
+    fetch("https://api.spacexdata.com/v4/launches/query", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query: {},
+        options: {
+          pagination: false,
+          populate: [
+            {
+              path: "rocket",
+              select: {
+                name: 1,
+              },
+            },
+            {
+              path: "payloads",
+              select: {
+                customers: 1,
+              },
+            },
+          ],
+        },
+      }),
+    })
+      .then((v) => v.json())
+      .then((v) => v.docs)
+      .then((v) =>
+        v.map((i: any) => ({
+          flightNumber: i.flight_number,
+          mission: i.name,
+          rocket: i.rocket.name,
+          launchDate: new Date(i.date_local),
+          upcoming: i.upcoming,
+          success: i.success,
+          customers: i.payloads.flatMap((p: any) => p.customers),
+        }))
+      )
+      // .then(console.log);
+      .then((l) => {
+        launches.insertMany(l);
+      })
+  );
+}
+
 export async function scheduleNewLaunch(
   launch: Omit<ILaunch, "flightNumber" | "customer" | "success" | "upcoming">
 ) {
+  if (!(await checkPlanetExists(launch.target))) {
+    throw new Error(`Planet with name ${launch.target} does not exist!`);
+  }
+
   const latestLaunchNumber = await getLatestLaunchNumber();
   const newLaunch = Object.assign(launch, {
     flightNumber: latestLaunchNumber + 1,
@@ -36,10 +101,6 @@ export async function scheduleNewLaunch(
 }
 
 async function saveLaunch(launch: ILaunch) {
-  if (!(await checkPlanetExists(launch))) {
-    throw new Error(`Planet with name ${launch.target} does not exist!`);
-  }
-
   await launches.findOneAndUpdate(
     {
       flightNumber: launch.flightNumber,
@@ -51,8 +112,8 @@ async function saveLaunch(launch: ILaunch) {
   );
 }
 
-async function checkPlanetExists(launch: ILaunch) {
-  const planet = await planets.findOne({ keplerName: launch.target });
+async function checkPlanetExists(launchTarget: string) {
+  const planet = await planets.findOne({ keplerName: launchTarget });
   return !!planet;
 }
 
