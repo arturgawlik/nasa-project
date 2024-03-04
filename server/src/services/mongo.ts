@@ -1,4 +1,5 @@
 import { connect, connection, disconnect } from "mongoose";
+import process from "node:process";
 
 const MONGO_URL =
   "mongodb+srv://nasa-api:Z5VRt7czFfVb0v16@nasacluster.gqw3fih.mongodb.net/nasa?retryWrites=true&w=majority";
@@ -13,3 +14,13 @@ export async function mongoConnect(uri?: string) {
 export function mongoDisconnect() {
   return disconnect();
 }
+
+["SIGTERM", "SIGINT", "SIGUSR2"].forEach((type) => {
+  process.once(type, async () => {
+    try {
+      await mongoDisconnect();
+    } finally {
+      process.kill(process.pid, type);
+    }
+  });
+});
