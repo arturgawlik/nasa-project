@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "watch": "tsc --watch & nodemon --inspect=2000 dist/server.js",
-    "start": "tsc && node dist/server.js",
+    "watch": "tsc --watch & nodemon --inspect=2000 --env-file=.env dist/server.js",
+    "start": "tsc && node dist/server.js --env-file=.env",
     "test": "jest",
     "test:watch": "jest --watch",
     "cluster": "tsc && pm2 start dist/server.js -i max --name \"server\""

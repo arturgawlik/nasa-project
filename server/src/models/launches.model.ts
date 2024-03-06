@@ -3,8 +3,21 @@ import planets from "./planets.mongo";
 
 const DEFAULT_FLIGHT_NUMBER = 0;
 
-export async function getAllLaunches() {
-  return await launches.find({}, { _id: 0, __v: 0 });
+/**
+ * @param limit limits the number of launches returned
+ * @param page 0 based page number
+ */
+export async function getAllLaunches(limit?: number, page?: number) {
+  const find = launches.find({}, { _id: 0, __v: 0 }).sort({ flightNumber: 1 });
+
+  if (page && limit) {
+    find.skip(limit * page);
+  }
+  if (limit) {
+    find.limit(limit);
+  }
+
+  return find;
 }
 
 export function getLaunchById(id: number) {
@@ -36,51 +49,48 @@ export async function loadLaunchData() {
 }
 
 function getSpacexLaunches() {
-  return (
-    fetch("https://api.spacexdata.com/v4/launches/query", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+  return fetch("https://api.spacexdata.com/v4/launches/query", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      query: {},
+      options: {
+        pagination: false,
+        populate: [
+          {
+            path: "rocket",
+            select: {
+              name: 1,
+            },
+          },
+          {
+            path: "payloads",
+            select: {
+              customers: 1,
+            },
+          },
+        ],
       },
-      body: JSON.stringify({
-        query: {},
-        options: {
-          pagination: false,
-          populate: [
-            {
-              path: "rocket",
-              select: {
-                name: 1,
-              },
-            },
-            {
-              path: "payloads",
-              select: {
-                customers: 1,
-              },
-            },
-          ],
-        },
-      }),
-    })
-      .then((v) => v.json())
-      .then((v) => v.docs)
-      .then((v) =>
-        v.map((i: any) => ({
-          flightNumber: i.flight_number,
-          mission: i.name,
-          rocket: i.rocket.name,
-          launchDate: new Date(i.date_local),
-          upcoming: i.upcoming,
-          success: i.success,
-          customers: i.payloads.flatMap((p: any) => p.customers),
-        }))
-      )
-      // .then(console.log);
-      .then((l) => {
-        launches.insertMany(l);
-      })
-  );
+    }),
+  })
+    .then((v) => v.json())
+    .then((v) => v.docs)
+    .then((v) =>
+      v.map((i: any) => ({
+        flightNumber: i.flight_number,
+        mission: i.name,
+        rocket: i.rocket.name,
+        launchDate: new Date(i.date_local),
+        upcoming: i.upcoming,
+        success: i.success,
+        customers: i.payloads.flatMap((p: any) => p.customers),
+      }))
+    )
+    .then((l) => {
+      launches.insertMany(l);
+    });
 }
 
 export async function scheduleNewLaunch(

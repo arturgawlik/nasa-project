@@ -6,9 +6,15 @@ import {
   abordLaunch,
 } from "../../models";
 import { ILaunch } from "../../models/launches.mongo";
+import { getPagination } from "../../services/query";
 
 export async function httpGetAllLaunches(req: Request, res: Response) {
-  return res.status(200).json(await getAllLaunches());
+  const { hasError, limit, page } = getPagination(req, res);
+  if (hasError) {
+    return;
+  }
+
+  return res.status(200).json(await getAllLaunches(limit, page));
 }
 
 export async function httpAddNewLaunch(req: Request, res: Response) {
